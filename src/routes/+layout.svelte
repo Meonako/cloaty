@@ -38,6 +38,7 @@
 	let edittingDbInfo: EditingDatabse;
 	let dbConnecting = false;
 	let testConnectionStatus: Status = 'idle';
+	let testConnectionErrorMessage: string = '';
 
 	$: if (testConnectionStatus != 'idle' && testConnectionStatus != 'processing') {
 		setTimeout(() => {
@@ -96,6 +97,13 @@
 		DATABASE_STORE.update((dbs) => {
 			if (edittingDbInfo.name != edittingDbInfo.ogName) {
 				delete dbs[edittingDbInfo.ogName];
+
+				invoke('disconnect_db', {
+					databaseType: edittingDbInfo.db.type,
+					connName: edittingDbInfo.ogName
+				});
+
+				ACTIVE_DB.set(null);
 			}
 
 			dbs[edittingDbInfo.name] = {
@@ -133,8 +141,9 @@
 				info
 			});
 			testConnectionStatus = 'pass';
-		} catch {
+		} catch (err: unknown) {
 			testConnectionStatus = 'failed';
+			testConnectionErrorMessage = err as string;
 		}
 	}
 </script>
@@ -208,6 +217,7 @@
 											{#each $SCHEMA_LIST_STORE[name] as schema}
 												<Button
 													variant="outline"
+													disabled={dbConnecting}
 													class="mx-auto w-3/4{$ACTIVE_DB?.db == name &&
 													$ACTIVE_DB.schema == schema
 														? ' w-full bg-cyan-500 text-black transition-all'
@@ -405,23 +415,44 @@
 							/>
 						</div>
 					</div>
-					<Dialog.Footer>
-						<Button
-							disabled={testConnectionStatus == 'processing'}
-							type="submit"
-							on:click={() => {
-								testConnection(newDB.type, newDB.name, {
-									host: newDB.host,
-									port: +newDB.port,
-									database: newDB.database,
-									user: newDB.username,
-									password: newDB.password
-								});
-							}}
-						>
-							Test Connection
-						</Button>
-						<Button type="submit" on:click={addNewDB}>Add</Button>
+					<Dialog.Footer class="flex flex-col sm:flex-col">
+						<div class="mb-2 flex flex-row justify-end gap-2">
+							{#if testConnectionStatus == 'idle'}
+								<div class="my-3" />
+							{:else if testConnectionStatus == 'processing'}
+								<TransitionMaker containerClass="flex items-center text-yellow-500">
+									<Loader2 class="mr-2 inline-block size-4 animate-spin" />
+									Testing connection...
+								</TransitionMaker>
+							{:else if testConnectionStatus == 'pass'}
+								<TransitionMaker containerClass="flex items-center text-green-500">
+									<Check class="mr-2 inline-block size-4" /> Connection successful
+								</TransitionMaker>
+							{:else if testConnectionStatus == 'failed'}
+								<TransitionMaker containerClass="flex items-center text-red-500">
+									<X class="mr-2 inline-block size-4" /> Error:&nbsp;
+									<div class="ml-auto">{testConnectionErrorMessage}</div>
+								</TransitionMaker>
+							{/if}
+						</div>
+						<div class="flex flex-row justify-end gap-2">
+							<Button
+								disabled={testConnectionStatus == 'processing'}
+								type="submit"
+								on:click={() => {
+									testConnection(newDB.type, newDB.name, {
+										host: newDB.host,
+										port: +newDB.port,
+										database: newDB.database,
+										user: newDB.username,
+										password: newDB.password
+									});
+								}}
+							>
+								Test Connection
+							</Button>
+							<Button type="submit" on:click={addNewDB}>Add</Button>
+						</div>
 					</Dialog.Footer>
 				</Dialog.Content>
 			</Dialog.Root>
@@ -505,9 +536,11 @@
 				/>
 			</div>
 		</div>
-		<Dialog.Footer>
-			{#if testConnectionStatus != 'idle'}
-				{#if testConnectionStatus == 'processing'}
+		<Dialog.Footer class="flex flex-col sm:flex-col">
+			<div class="mb-2 flex flex-row justify-end gap-2">
+				{#if testConnectionStatus == 'idle'}
+					<div class="my-3" />
+				{:else if testConnectionStatus == 'processing'}
 					<TransitionMaker containerClass="flex items-center text-yellow-500">
 						<Loader2 class="mr-2 inline-block size-4 animate-spin" />
 						Testing connection...
@@ -518,26 +551,29 @@
 					</TransitionMaker>
 				{:else if testConnectionStatus == 'failed'}
 					<TransitionMaker containerClass="flex items-center text-red-500">
-						<X class="mr-2 inline-block size-4" /> Could not connect to the database
+						<X class="mr-2 inline-block size-4" /> Error:&nbsp;
+						<div class="ml-auto">{testConnectionErrorMessage}</div>
 					</TransitionMaker>
 				{/if}
-			{/if}
-			<Button
-				disabled={testConnectionStatus == 'processing'}
-				type="submit"
-				on:click={() => {
-					testConnection(edittingDbInfo.db.type, edittingDbInfo.name, {
-						host: edittingDbInfo.db.host,
-						port: edittingDbInfo.db.port,
-						database: edittingDbInfo.db.dbname,
-						user: edittingDbInfo.db.username,
-						password: edittingDbInfo.db.password
-					});
-				}}
-			>
-				Test Connection
-			</Button>
-			<Button type="submit" on:click={editDB}>Save</Button>
+			</div>
+			<div class="flex flex-row justify-end gap-2">
+				<Button
+					disabled={testConnectionStatus == 'processing'}
+					type="submit"
+					on:click={() => {
+						testConnection(edittingDbInfo.db.type, edittingDbInfo.name, {
+							host: edittingDbInfo.db.host,
+							port: edittingDbInfo.db.port,
+							database: edittingDbInfo.db.dbname,
+							user: edittingDbInfo.db.username,
+							password: edittingDbInfo.db.password
+						});
+					}}
+				>
+					Test Connection
+				</Button>
+				<Button type="submit" on:click={editDB}>Save</Button>
+			</div>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

@@ -21,7 +21,7 @@
 
 	let promise: Promise<string[]>;
 
-	$: if (!$ACTIVE_DB!.table) {
+	$: if ($ACTIVE_DB && !$ACTIVE_DB!.table) {
 		promise = getTables($ACTIVE_DB!);
 	}
 </script>
