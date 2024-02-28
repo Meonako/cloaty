@@ -62,7 +62,7 @@ impl Default for Settings {
             animation: Animation {
                 enabled: true,
                 duration: 200,
-                r#type: "scale".to_string(),
+                r#type: "fade".to_string(),
                 params: AnimationParams {
                     fly: FlyParams {
                         in_x: 100,

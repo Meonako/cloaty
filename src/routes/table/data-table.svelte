@@ -17,6 +17,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { Label } from "$lib/components/ui/label";
 	import { ArrowUpDown, ChevronDown } from 'lucide-svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import TransitionMaker from '$lib/components/transitionMaker.svelte';
@@ -28,7 +29,7 @@
 		}),
 		sort: addSortBy({ disableMultiSort: true }),
 		filter: addTableFilter({
-			fn: ({ filterValue, value }) => value.includes(filterValue)
+			fn: ({ filterValue, value }) => value.toLowerCase().includes(filterValue.toLowerCase()),
 		}),
 		hide: addHiddenColumns(),
 		select: addSelectedRows()
@@ -61,7 +62,10 @@
 <TransitionMaker>
 	<div class="flex items-center py-4">
 		<Input class="max-w-sm" placeholder="Search..." type="text" bind:value={$filterValue} />
-		<NumberInput class="ml-auto max-w-sm" type="text" bind:value={$pageSize} />
+		<div class="flex flex-row items-center ml-auto w-auto">
+			<Label for="rowsPerPage">Rows per page:&nbsp;</Label>
+			<NumberInput id="rowsPerPage" class="w-[30%]" bind:value={$pageSize} />
+		</div>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger asChild let:builder>
 				<Button variant="outline" builders={[builder]}>
@@ -124,18 +128,35 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex flex-row w-full items-center py-4">
+	<div class="flex w-full flex-row items-center py-4">
 		<div class="text-sm text-muted-foreground">
 			{($pageIndex + 1) * $pageSize} of {$rows.length}
 		</div>
 
-		{#if $rows.length >= Object.keys(data).length}
-			<Button variant="outline" size="sm" class="mx-auto text-sm text-muted-foreground" on:click={() => (page += 1)}>
+		{#if $rows.length >= $SETTINGS.database.fetch_limit}
+		<div class="mx-auto">
+			{#if page >= 0}
+				<Button
+					variant="outline"
+					size="sm"
+					class="text-sm text-muted-foreground"
+					on:click={() => (page -= 1)}
+				>
+					Previous {$SETTINGS.database.fetch_limit} items
+				</Button>
+			{/if}
+			<Button
+				variant="outline"
+				size="sm"
+				class="text-sm text-muted-foreground"
+				on:click={() => (page += 1)}
+			>
 				Fetch Next {$SETTINGS.database.fetch_limit} items
 			</Button>
+		</div>
 		{/if}
 
-		<div class="flex flex-row ml-auto">
+		<div class="ml-auto flex flex-row">
 			<Button
 				variant="secondary"
 				size="sm"

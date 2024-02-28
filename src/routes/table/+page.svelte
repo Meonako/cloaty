@@ -6,6 +6,7 @@
 	import DataTable from './data-table.svelte';
 
 	let page = 0;
+	let promise: Promise<[string[], Record<string, any[]>[]]>;
 
 	async function getData(): Promise<[string[], Record<string, any[]>[]]> {
 		if (!$ACTIVE_DB!.type) throw new Error('No database type specified');
@@ -23,9 +24,7 @@
 		});
 	}
 
-	let promise = getData();
-
-	$: if (page > 0) {
+	$: if (page >= 0) {
 		promise = getData();
 	}
 </script>
