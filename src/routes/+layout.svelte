@@ -2,7 +2,6 @@
 	export let data;
 	import '../app.pcss';
 
-	import { fly } from 'svelte/transition';
 	import { invoke } from '@tauri-apps/api';
 
 	import { DATABASE_STORE } from '$lib/store/database';
@@ -211,7 +210,7 @@
 													variant="outline"
 													class="mx-auto w-3/4{$ACTIVE_DB?.db == name &&
 													$ACTIVE_DB.schema == schema
-														? ' bg-cyan-500 text-black'
+														? ' w-full bg-cyan-500 text-black transition-all'
 														: ''}"
 													on:click={() => {
 														ACTIVE_DB.set({
@@ -420,11 +419,9 @@
 								});
 							}}
 						>
-								Test Connection
+							Test Connection
 						</Button>
-						<Button type="submit" on:click={addNewDB}>
-							Add
-						</Button>
+						<Button type="submit" on:click={addNewDB}>Add</Button>
 					</Dialog.Footer>
 				</Dialog.Content>
 			</Dialog.Root>

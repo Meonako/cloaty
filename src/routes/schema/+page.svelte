@@ -2,33 +2,32 @@
 	import { goto } from '$app/navigation';
 	import { invoke } from '@tauri-apps/api';
 	import { ACTIVE_DB } from '$lib/store/activeDB';
+	import type { Active } from '$lib/types';
 
 	import TransitionMaker from '$lib/components/transitionMaker.svelte';
 	import { Button } from '$lib/components/ui/button';
 
-	async function getTables(): Promise<string[]> {
-		if (!$ACTIVE_DB!.type) throw new Error('No database type specified');
-		if (!$ACTIVE_DB!.db) throw new Error('No database specified');
-		if (!$ACTIVE_DB!.schema) throw new Error('No schema specified');
+	async function getTables(db: Active): Promise<string[]> {
+		if (!db.type) throw new Error('No database type specified');
+		if (!db.db) throw new Error('No database specified');
+		if (!db.schema) throw new Error('No schema specified');
 
 		return await invoke('get_tables', {
-			databaseType: $ACTIVE_DB!.type,
-			connName: $ACTIVE_DB!.db,
-			schema: $ACTIVE_DB!.schema
+			databaseType: db.type,
+			connName: db.db,
+			schema: db.schema
 		});
 	}
 
-	let promise = getTables();
+	let promise: Promise<string[]>;
 
-	$: if ($ACTIVE_DB) {
-		promise = getTables();
+	$: if (!$ACTIVE_DB!.table) {
+		promise = getTables($ACTIVE_DB!);
 	}
 </script>
 
 {#await promise}
-	<!-- <TransitionMaker> -->
-		<h1 class="text-center text-3xl">Loading...</h1>
-	<!-- </TransitionMaker> -->
+	<h1 class="flex h-full w-full items-center justify-center text-center text-3xl">Loading...</h1>
 {:then tables}
 	<TransitionMaker containerClass="max-h-full w-full overflow-y-auto">
 		<div class="flex w-full">
@@ -36,7 +35,8 @@
 				variant="link"
 				class="ml-auto"
 				on:click={() => {
-					promise = getTables();
+					// @ts-ignore
+					promise = getTables($ACTIVE_DB);
 				}}
 			>
 				Refresh

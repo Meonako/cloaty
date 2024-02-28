@@ -2,7 +2,7 @@ import type { fade, fly, scale } from 'svelte/transition';
 
 export type Schema = Record<string, string[]>;
 
-export type SupportDatabase = "pg" | "mysql";
+export type SupportDatabase = 'pg' | 'mysql';
 
 export type Status = 'pass' | 'failed' | 'processing' | 'idle';
 
@@ -20,7 +20,7 @@ export type EditingDatabse = {
 	ogName: string;
 	name: string;
 	db: Database;
-}
+};
 
 export type Database = {
 	type: SupportDatabase;

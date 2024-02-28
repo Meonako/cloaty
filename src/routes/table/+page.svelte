@@ -20,16 +20,10 @@
 	}
 
 	let promise = getData();
-
-	$: if ($ACTIVE_DB) {
-		promise = getData();
-	}
 </script>
 
 {#await promise}
-	<!-- <TransitionMaker> -->
-		<h1 class="text-center text-3xl">Loading...</h1>
-	<!-- </TransitionMaker> -->
+	<h1 class="flex h-full w-full items-center justify-center text-center text-3xl">Loading...</h1>
 {:then data}
 	<DataTable data={data[1]} columnHeaders={data[0]} />
 {:catch error}

@@ -39,10 +39,7 @@
 
 			<div class="flex w-full max-w-sm flex-col gap-1.5">
 				<Label for="itemsPerPage">Display Items per Page</Label>
-				<NumberInput
-					id="itemsPerPage"
-					bind:value={$SETTINGS.database.items_per_page}
-				/>
+				<NumberInput id="itemsPerPage" bind:value={$SETTINGS.database.items_per_page} />
 				<p class="text-sm text-muted-foreground">
 					How many rows to display per page (in table)
 				</p>
