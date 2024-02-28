@@ -298,6 +298,13 @@
 							class="bg-red-500 text-center text-white transition-colors hover:bg-red-400"
 							on:click={() => {
 								DATABASE_STORE.update((dbs) => {
+									if (dbs[name].connect) {
+										invoke('disconnect_db', {
+											databaseType: dbs[name].type,
+											connName: name
+										});
+									}
+
 									delete dbs[name];
 									return dbs;
 								});
