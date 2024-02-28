@@ -9,6 +9,8 @@ pub async fn get_data(
     conn_name: &str,
     schema: &str,
     table: &str,
+    limit: usize,
+    page: usize,
     state: tauri::State<'_, State>,
 ) -> Result<(Vec<String>, Vec<HashMap<String, serde_json::Value>>), String> {
     match database_type {
@@ -36,7 +38,7 @@ pub async fn get_data(
                     rows.into_iter().map(|r| r.get_unchecked("column_name")).collect()
             });
 
-            let rows = sqlx::query(&format!("SELECT * FROM `{schema}`.`{table}`"))
+            let rows = sqlx::query(&format!("SELECT * FROM `{schema}`.`{table}` LIMIT {limit} OFFSET {page} * {limit}"))
                 .fetch_all(pool)
                 .await
                 .map_err(|e| e.to_string())?;
@@ -69,7 +71,7 @@ pub async fn get_data(
                 rows.into_iter().map(|r| r.get_unchecked("column_name")).collect()
             });
 
-            let rows = sqlx::query(&format!("SELECT * FROM {schema}.{table}"))
+            let rows = sqlx::query(&format!("SELECT * FROM {schema}.{table} LIMIT {limit} OFFSET {page} * {limit}"))
                 .fetch_all(pool)
                 .await
                 .map_err(|e| e.to_string())?;

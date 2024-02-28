@@ -12,6 +12,10 @@ function initStore(value: Settings): Writable<Settings> {
 		update: (f: Updater<Settings>) => {
 			update(f);
 
+			invoke('save_settings', {
+				settings: JSON.stringify(value)
+			});
+
 			if (!value.animation.enabled) return;
 
 			let anim = getAnimationInfo(value);
@@ -19,6 +23,10 @@ function initStore(value: Settings): Writable<Settings> {
 		},
 		set: (v: Settings) => {
 			set(v);
+
+			invoke('save_settings', {
+				settings: JSON.stringify(v)
+			});
 
 			if (!v.animation.enabled) return;
 

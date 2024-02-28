@@ -1,6 +1,7 @@
 <script lang="ts">
 	export let data: Record<string, any[]>[];
 	export let columnHeaders: string[];
+	export let page = 0;
 
 	import { createTable, Render, Subscribe, createRender } from 'svelte-headless-table';
 	import {
@@ -11,6 +12,7 @@
 		addSelectedRows
 	} from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
+	import { SETTINGS } from '$lib/store/settings';
 
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
@@ -18,10 +20,11 @@
 	import { ArrowUpDown, ChevronDown } from 'lucide-svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import TransitionMaker from '$lib/components/transitionMaker.svelte';
+	import { NumberInput } from '$lib/components/ui/numberinput';
 
 	const table = createTable(readable(data), {
 		page: addPagination({
-			initialPageSize: 50
+			initialPageSize: $SETTINGS.database.items_per_page
 		}),
 		sort: addSortBy({ disableMultiSort: true }),
 		filter: addTableFilter({
@@ -49,14 +52,19 @@
 	$: $hiddenColumnIds = Object.entries(hideForId)
 		.filter(([, hide]) => !hide)
 		.map(([id]) => id);
+
+	$: if ($pageSize && $pageSize !== $SETTINGS.database.items_per_page) {
+		$SETTINGS.database.items_per_page = $pageSize;
+	}
 </script>
 
 <TransitionMaker>
 	<div class="flex items-center py-4">
 		<Input class="max-w-sm" placeholder="Search..." type="text" bind:value={$filterValue} />
+		<NumberInput class="ml-auto max-w-sm" type="text" bind:value={$pageSize} />
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger asChild let:builder>
-				<Button variant="outline" class="ml-auto" builders={[builder]}>
+				<Button variant="outline" builders={[builder]}>
 					Columns <ChevronDown class="ml-2 h-4 w-4" />
 				</Button>
 			</DropdownMenu.Trigger>
@@ -116,85 +124,33 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex items-center justify-end space-x-4 py-4">
-		<div class="flex-1 text-sm text-muted-foreground">
-			<!-- {Object.keys($selectedDataIds).length} of{' '}
-			{$rows.length} row(s) selected. -->
-			{$pageSize} of {$rows.length}
-		</div>
+	<div class="flex flex-row w-full items-center py-4">
 		<div class="text-sm text-muted-foreground">
-			{10 * ($pageIndex + 1)} of {data.length}
+			{($pageIndex + 1) * $pageSize} of {$rows.length}
 		</div>
 
-		<Button
-			variant="outline"
-			size="sm"
-			on:click={() => ($pageIndex = $pageIndex - 1)}
-			disabled={!$hasPreviousPage}
-		>
-			Previous
-		</Button>
-
-		{#if $pageIndex != 0}
-			<Button variant="outline" size="sm" on:click={() => ($pageIndex = 0)}>1</Button>
+		{#if $rows.length >= Object.keys(data).length}
+			<Button variant="outline" size="sm" class="mx-auto text-sm text-muted-foreground" on:click={() => (page += 1)}>
+				Fetch Next {$SETTINGS.database.fetch_limit} items
+			</Button>
 		{/if}
 
-		{#if $pageIndex > 2 && $pageIndex < $pageCount - 1}
-			<!-- <Input
-				type="number"
-				placeholder="Jump to"
-				class="w-[10%] max-w-xs"
-				on:input={(e) => {
-					// @ts-ignore
-					if (!e.target || !e.target.value) return;
-					// @ts-ignore
-					$pageIndex = parseInt(e.target.value) - 1;
-				}}
-			/> -->
-			<div>&nbsp; ... &nbsp;</div>
-		{/if}
-
-		{#if $hasPreviousPage && $pageIndex > 1}
+		<div class="flex flex-row ml-auto">
 			<Button
-				variant="outline"
+				variant="secondary"
 				size="sm"
 				on:click={() => ($pageIndex = $pageIndex - 1)}
 				disabled={!$hasPreviousPage}
 			>
-				{$pageIndex}
+				Previous
 			</Button>
-		{/if}
 
-		<Button variant="outline" size="sm" disabled={true}>
-			{$pageIndex + 1}
-		</Button>
+			{#if $pageIndex != 0}
+				<Button variant="outline" size="sm" on:click={() => ($pageIndex = 0)}>1</Button>
+			{/if}
 
-		{#if $hasNextPage && $pageIndex + 2 < $pageCount}
-			{@const nextPage = $pageIndex + 1}
-			<Button
-				variant="outline"
-				size="sm"
-				disabled={!$hasNextPage}
-				on:click={() => ($pageIndex = nextPage)}
-			>
-				{nextPage + 1}
-			</Button>
-		{/if}
-
-		{#if $pageIndex + 2 < $pageCount - 1}
-			{@const nextPage = $pageIndex + 2}
-			<Button
-				variant="outline"
-				size="sm"
-				disabled={!$hasNextPage}
-				on:click={() => ($pageIndex = nextPage)}
-			>
-				{nextPage + 1}
-			</Button>
-		{/if}
-
-		{#if $pageIndex + 3 < $pageCount - 1}
-			<!-- <Input
+			{#if $pageIndex > 2 && $pageIndex < $pageCount - 1}
+				<!-- <Input
 				type="number"
 				placeholder="Jump to"
 				class="w-[10%] max-w-xs"
@@ -205,27 +161,82 @@
 					$pageIndex = parseInt(e.target.value) - 1;
 				}}
 			/> -->
-			<div>&nbsp; ... &nbsp;</div>
-		{/if}
+				<div>&nbsp; ... &nbsp;</div>
+			{/if}
 
-		{#if $pageCount != 1 && $pageIndex < $pageCount - 1}
+			{#if $hasPreviousPage && $pageIndex > 1}
+				<Button
+					variant="outline"
+					size="sm"
+					on:click={() => ($pageIndex = $pageIndex - 1)}
+					disabled={!$hasPreviousPage}
+				>
+					{$pageIndex}
+				</Button>
+			{/if}
+
+			<Button variant="outline" size="sm" disabled={true}>
+				{$pageIndex + 1}
+			</Button>
+
+			{#if $hasNextPage && $pageIndex + 2 < $pageCount}
+				{@const nextPage = $pageIndex + 1}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!$hasNextPage}
+					on:click={() => ($pageIndex = nextPage)}
+				>
+					{nextPage + 1}
+				</Button>
+			{/if}
+
+			{#if $pageIndex + 2 < $pageCount - 1}
+				{@const nextPage = $pageIndex + 2}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!$hasNextPage}
+					on:click={() => ($pageIndex = nextPage)}
+				>
+					{nextPage + 1}
+				</Button>
+			{/if}
+
+			{#if $pageIndex + 3 < $pageCount - 1}
+				<!-- <Input
+				type="number"
+				placeholder="Jump to"
+				class="w-[10%] max-w-xs"
+				on:input={(e) => {
+					// @ts-ignore
+					if (!e.target || !e.target.value) return;
+					// @ts-ignore
+					$pageIndex = parseInt(e.target.value) - 1;
+				}}
+			/> -->
+				<div>&nbsp; ... &nbsp;</div>
+			{/if}
+
+			{#if $pageCount != 1 && $pageIndex < $pageCount - 1}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!$hasNextPage}
+					on:click={() => ($pageIndex = $pageCount - 1)}
+				>
+					{$pageCount}
+				</Button>
+			{/if}
+
 			<Button
 				variant="outline"
 				size="sm"
 				disabled={!$hasNextPage}
-				on:click={() => ($pageIndex = $pageCount - 1)}
+				on:click={() => ($pageIndex = $pageIndex + 1)}
 			>
-				{$pageCount}
+				Next
 			</Button>
-		{/if}
-
-		<Button
-			variant="outline"
-			size="sm"
-			disabled={!$hasNextPage}
-			on:click={() => ($pageIndex = $pageIndex + 1)}
-		>
-			Next
-		</Button>
+		</div>
 	</div>
 </TransitionMaker>

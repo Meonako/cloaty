@@ -12,10 +12,6 @@
 	import * as Select from '$lib/components/ui/select';
 	import { NumberInput } from '$lib/components/ui/numberinput';
 
-	$: invoke('save_settings', {
-		settings: JSON.stringify($SETTINGS)
-	});
-
 	let animation = $ANIMATION?.animation;
 	$: if ($SETTINGS.animation.enabled) {
 		animation = $ANIMATION?.animation;

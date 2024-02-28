@@ -280,7 +280,7 @@
 					</ContextMenu.Trigger>
 					<ContextMenu.Content>
 						<ContextMenu.Item
-							class="bg-red-500 text-center text-white transition-colors hover:bg-red-400"
+							class="text-center text-white transition-colors"
 							on:click={() => {
 								edittingDbInfo = {
 									ogName: name,
@@ -295,7 +295,7 @@
 							Edit
 						</ContextMenu.Item>
 						<ContextMenu.Item
-							class="bg-red-500 text-center text-white transition-colors hover:bg-red-400"
+							class="bg-red-500 text-center text-white transition-colors hover:bg-red-400 hover:text-black"
 							on:click={() => {
 								DATABASE_STORE.update((dbs) => {
 									if (dbs[name].connect) {
